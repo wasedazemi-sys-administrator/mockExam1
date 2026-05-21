@@ -7,25 +7,38 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
-  <div id="status" style="text-align: center; margin-top: 50px; font-family: sans-serif; color: #666;">
-    認証情報を確認中...
+  <div id="status" style="text-align: center; margin-top: 50px; font-family: sans-serif; color: #666; font-size: 16px;">
+    ⏳ 認証情報を確認中...
   </div>
 
   <script>
-    // 💡 あなたのGASのWebアプリURL（末尾が /exec のもの）
+    // GASのWebアプリURL
     const GAS_URL = "https://script.google.com/a/macros/wasedazemi.com/s/AKfycbxXJxu9IFZt5cYeRZGPLQwjj3kFefQxvNOdCx94o8HwI9wk6EnK1MREwQ7hrx6GjtI6vA/exec";
+    // あなたのLIFF ID
     const LIFF_ID = "2010160050-q3pbkyj0";
 
+    // 💡 エラー回避用：通常のJavaScriptでURLからパラメータを直接ぶっこ抜く安全な関数
+    function getUrlParameter(name) {
+      // 現在のURL、またはLINEログイン時のリダイレクトURL（liffRedirectUriのデコード後）両方から探す
+      const currentUrl = window.location.href;
+      const decodedUrl = decodeURIComponent(currentUrl);
+      
+      const regex = new RegExp('[?&]' + name + '=([^&#]*)');
+      const results = regex.exec(currentUrl) || regex.exec(decodedUrl);
+      return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
     window.onload = function() {
+      // 💡 1. 先にURLから「campus」の値を安全に退避させておく（最重要）
+      const campus = getUrlParameter('campus');
+
       liff.init({ liffId: LIFF_ID })
         .then(() => {
+          // 未ログインならログイン画面へ誘導
           if (!liff.isLoggedIn()) {
             liff.login();
             return;
           }
-
-          // 1. URLパラメータから「campus」を取得
-          const campus = liff.searchHelper.get('campus') || '';
 
           // 2. LINEプロファイルから「LINE ID (userId)」を取得
           liff.getProfile()
@@ -37,12 +50,12 @@
               window.location.href = redirectUrl;
             })
             .catch(err => {
-              document.getElementById('status').innerText = "LINEプロファイルの取得に失敗しました。";
+              document.getElementById('status').innerText = "❌ LINEプロファイルの取得に失敗しました。";
               console.error(err);
             });
         })
         .catch(err => {
-          document.getElementById('status').innerText = "LIFFの初期化に失敗しました。";
+          document.getElementById('status').innerText = "❌ LIFFの初期化に失敗しました。";
           console.error(err);
         });
     };
