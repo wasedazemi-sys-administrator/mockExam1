@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>接続中...</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <div id="status" style="text-align: center; margin-top: 50px; font-family: sans-serif; color: #666;">
+    認証情報を確認中...
+  </div>
+
+  <script>
+    // 💡 あなたのGASのWebアプリURL（末尾が /exec のもの）
+    const GAS_URL = "https://script.google.com/a/macros/wasedazemi.com/s/AKfycbxXJxu9IFZt5cYeRZGPLQwjj3kFefQxvNOdCx94o8HwI9wk6EnK1MREwQ7hrx6GjtI6vA/exec";
+    const LIFF_ID = "2010160050-q3pbkyj0";
+
+    window.onload = function() {
+      liff.init({ liffId: LIFF_ID })
+        .then(() => {
+          if (!liff.isLoggedIn()) {
+            liff.login();
+            return;
+          }
+
+          // 1. URLパラメータから「campus」を取得
+          const campus = liff.searchHelper.get('campus') || '';
+
+          // 2. LINEプロファイルから「LINE ID (userId)」を取得
+          liff.getProfile()
+            .then(profile => {
+              const lineId = profile.userId;
+
+              // 3. GASのURLにパラメータを付与してリダイレクト
+              const redirectUrl = `${GAS_URL}?campus=${encodeURIComponent(campus)}&lineId=${encodeURIComponent(lineId)}`;
+              window.location.href = redirectUrl;
+            })
+            .catch(err => {
+              document.getElementById('status').innerText = "LINEプロファイルの取得に失敗しました。";
+              console.error(err);
+            });
+        })
+        .catch(err => {
+          document.getElementById('status').innerText = "LIFFの初期化に失敗しました。";
+          console.error(err);
+        });
+    };
+  </script>
+</body>
+</html>
